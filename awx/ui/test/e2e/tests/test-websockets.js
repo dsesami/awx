@@ -15,7 +15,6 @@ import {
 import {
     AWX_E2E_URL,
     AWX_E2E_TIMEOUT_ASYNC,
-    AWX_E2E_TIMEOUT_LONG,
     AWX_E2E_TIMEOUT_SHORT,
 } from '../settings';
 
@@ -66,8 +65,8 @@ module.exports = {
             .pause(AWX_E2E_TIMEOUT_SHORT) // helps prevent flake
             .findThenClick('.fa-trash-o', 'css')
             .waitForElementVisible('#prompt_action_btn')
-            .pause(AWX_E2E_TIMEOUT_SHORT) // animation catches us sometimes
-            .findThenClick('#prompt_action_btn');
+            .pause(2000) // animation catches us sometimes
+            .click('#prompt_action_btn');
         client.useCss().expect.element('[ng-if="inventory.pending_deletion"]')
             .to.be.visible.before(AWX_E2E_TIMEOUT_SHORT);
     },
