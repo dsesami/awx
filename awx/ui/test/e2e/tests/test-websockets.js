@@ -49,14 +49,28 @@ module.exports = {
         Promise.all(resources)
             .then(([inventory, project, org, jt1, jt2, sjt, sj]) => {
                 data = { inventory, project, org, jt1, jt2, sjt, sj };
+                client.login();
+                client.waitForAngular();
                 done();
             });
-
-        client
-            .login()
-            .waitForAngular();
     },
-
+    'Test pending deletion of inventories': client => {
+        const uniqueID = uuid().substr(0, 8);
+        getInventorySource(`test-pending-delete-${uniqueID}`);
+        client
+            .useCss()
+            .navigateTo(`${AWX_E2E_URL}/#/inventories`, false)
+            .waitForElementVisible('.SmartSearch-input')
+            .clearValue('.SmartSearch-input')
+            .setValue('.SmartSearch-input', [`test-pending-delete-${uniqueID}`, client.Keys.ENTER])
+            .pause(AWX_E2E_TIMEOUT_SHORT) // helps prevent flake
+            .findThenClick('.fa-trash-o', 'css')
+            .waitForElementVisible('#prompt_action_btn')
+            .pause(AWX_E2E_TIMEOUT_SHORT) // animation catches us sometimes
+            .findThenClick('#prompt_action_btn');
+        client.useCss().expect.element('[ng-if="inventory.pending_deletion"]')
+            .to.be.visible.before(AWX_E2E_TIMEOUT_SHORT);
+    },
     'Test job template status updates for a successful job on dashboard': client => {
         client
             .useCss()
@@ -162,23 +176,6 @@ module.exports = {
             .to.be.visible.before(AWX_E2E_TIMEOUT_ASYNC);
         client.useXpath().expect.element(`${splitJt}${sparklineIcon}[1]${success}`)
             .to.be.present.before(AWX_E2E_TIMEOUT_ASYNC);
-    },
-    'Test pending deletion of inventories': client => {
-        const uniqueID = uuid().substr(0, 8);
-        getInventorySource(`test-pending-delete-${uniqueID}`);
-        client
-            .useCss()
-            .navigateTo(`${AWX_E2E_URL}/#/inventories`, false)
-            .waitForElementVisible('.SmartSearch-input')
-            .clearValue('.SmartSearch-input')
-            .setValue('.SmartSearch-input', [`test-pending-delete-${uniqueID}`, client.Keys.ENTER])
-            .pause(AWX_E2E_TIMEOUT_SHORT) // helps prevent flake
-            .findThenClick('.fa-trash-o', 'css')
-            .waitForElementVisible('#prompt_action_btn')
-            .pause(AWX_E2E_TIMEOUT_SHORT) // animation catches us sometimes
-            .click('#prompt_action_btn');
-        client.useCss().expect.element('[ng-if="inventory.pending_deletion"]')
-            .to.be.visible.before(AWX_E2E_TIMEOUT_LONG);
     },
     after: client => {
         client.end();
